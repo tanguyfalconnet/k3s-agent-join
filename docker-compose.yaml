@@ -1,0 +1,38 @@
+version: '3'
+services:
+  wireguard:
+    container_name: 'wireguard'
+    image: 'linuxserver/wireguard'
+    restart: 'unless-stopped'
+    environment:
+      PUID: 1000
+      PGID: 1000
+    sysctls:
+    - "net.ipv4.conf.all.rp_filter=2"
+    cap_add:
+    - net_admin 
+    - sys_module
+    ports:
+    - '6443:6443' # k3s
+    - '8472:8472' # flannel
+    volumes:
+      - ${PWD}:/config
+  k3s:
+    container_name: 'k3s'
+    command: agent
+    tmpfs:
+    - /run
+    - /var/run
+    ulimits:
+      nproc: 65535
+      nofile:
+        soft: 65535
+        hard: 65535
+    privileged: true
+    image: 'rancher/k3s'
+    restart: 'unless-stopped'
+    network_mode: "service:wireguard"
+    environment:
+      K3S_TOKEN: <provided>
+      K3S_URL: <provided>
+      K3S_NODE_NAME: <to_define>
